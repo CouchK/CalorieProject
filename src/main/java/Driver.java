@@ -22,7 +22,7 @@ public class Driver
         String API_KEY = dotenv.get("CALORIE_COUNTER_API_KEY");
         String API_ID = dotenv.get("CALORIE_COUNTER_API_ID");
         Calories counter = new Calories();
-        Map<String, String> map = new HashMap<>();
+        Map<String, Double> map = new HashMap<>();
 
         //GUI
         //Frame
@@ -68,23 +68,28 @@ public class Driver
 
                     //Add food item and calories to array of items
                     double calories = queryAPI(API_KEY, API_ID, userInput);
-                    if(calories != -1)
+                    if (calories != -1)
                     {
-                        map.put(userInput, String.valueOf(calories));
+                        //If table already contains item add calories to existing item
+                        if(map.containsKey(userInput))
+                        {
+                            map.put(userInput, map.get(userInput) + calories);
+                        }
+                        else map.put(userInput, calories);
 
                         //Add food item calories to total
                         counter.addCalories(calories);
 
                         resultLabel.setText("");
-                    }
-                    else resultLabel.setText("Unable to find item");
+                    } else resultLabel.setText("Unable to find item");
+
 
                     //Empty text box
                     foodTextField.setText("");
 
-                    //Create and update table to display all food items and calories
+                    //Update table that displays food items and calories
                     defaultModel.setRowCount(0);
-                    for (Map.Entry<String, String> entry : map.entrySet()) {
+                    for (Map.Entry<String, Double> entry : map.entrySet()) {
                         defaultModel.addRow(new Object[] {entry.getKey(), entry.getValue()});
                     }
 
