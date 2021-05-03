@@ -16,9 +16,4 @@ public class Calories
     {
         return totalCals;
     }
-
-    public void deleteCalories(double cal)
-    {
-        totalCals -= cal;
-    }
 }
