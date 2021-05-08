@@ -2,11 +2,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -25,21 +26,27 @@ public class Driver
         Map<String, Double> map = new HashMap<>();
 
         //GUI
+        Border border = BorderFactory.createLineBorder(Color.BLACK);
+
         //Frame
         JFrame frame = new JFrame();
-        frame.setSize(700, 400);
+        frame.setSize(800, 400);
+        frame.setResizable(false);
 
         //Panels
         JPanel masterPanel = new JPanel(new BorderLayout());
-        JPanel gridLeft = new JPanel(new GridLayout(3,2));
-        JPanel gridRight = new JPanel(new GridLayout(3,3));
+        JPanel gridLeft = new JPanel(new FlowLayout());
+        JPanel gridRight = new JPanel(new BorderLayout());
 
-        masterPanel.add(gridLeft, BorderLayout.WEST);
+        masterPanel.add(gridLeft);
+        masterPanel.add(gridRight, BorderLayout.EAST);
         masterPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
 
         //Create text field and label for user input
         JLabel label = new JLabel("Please enter food item:");
         JTextField foodTextField = new JTextField();
+        foodTextField.setBorder(border);
+        foodTextField.setPreferredSize(new Dimension(150,40));
         gridLeft.add(label);
         gridLeft.add(foodTextField);
 
@@ -50,22 +57,25 @@ public class Driver
 
         //Create submit button
         JButton submitBtn = new JButton("Add Item");
+        submitBtn.setPreferredSize(new Dimension(90, 40));
 
         //Create table to display food item and calories
         String [] columnNames = {"Food" , "Calories"};
         DefaultTableModel defaultModel = new DefaultTableModel(columnNames, 0);
         JTable foodTable = new JTable(defaultModel);
         foodTable.setBackground(Color.WHITE);
+
+        //Add table to scroll pane
         gridRight.add(new JScrollPane(foodTable));
 
         submitBtn.addActionListener(new ActionListener()
         {
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)
+            {
+                //Get user input
                 String userInput = foodTextField.getText();
                 if(!userInput.equals(""))
                 {
-                    userInput = foodTextField.getText();
-
                     //Add food item and calories to array of items
                     double calories = queryAPI(API_KEY, API_ID, userInput);
                     if (calories != -1)
@@ -90,13 +100,13 @@ public class Driver
                     //Update table that displays food items and calories
                     defaultModel.setRowCount(0);
                     for (Map.Entry<String, Double> entry : map.entrySet()) {
-                        defaultModel.addRow(new Object[] {entry.getKey(), entry.getValue()});
+                        defaultModel.addRow(new Object[] {entry.getKey(), Math.floor(entry.getValue() * 100) / 100});
                     }
 
-                    gridRight.add(totalLabel);
+                    gridLeft.add(totalLabel);
 
                     //Display total calories
-                    totalLabel.setText("Total Calories: " + counter.getCalories());
+                    totalLabel.setText("Total Calories: " + Math.floor(counter.getCalories() * 100) / 100);
 
                     frame.validate();
                 }
@@ -107,13 +117,21 @@ public class Driver
             }});
         gridLeft.add(submitBtn);
 
-        masterPanel.add(gridRight);
         frame.add(masterPanel, BorderLayout.CENTER);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setTitle("Calorie Tracker");
         frame.setVisible(true);
+        //frame.pack();
         frame.setLocationRelativeTo(null);
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public static double queryAPI(String API_KEY, String API_ID, String userInput)
@@ -141,7 +159,7 @@ public class Driver
 
             return foodCal.asDouble();
         }
-        catch(Exception e)
+        catch(IOException | InterruptedException e)
         {
             System.out.println("Unable to find item");
             return -1;
